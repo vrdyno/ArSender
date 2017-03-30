@@ -140,7 +140,13 @@ Dicom Url: <input type="url" id="dicomUrl" value="" placeholder="paste dicom lin
             <br />
             <br />
       <button id="switch-camera" >Accept Webcam</button>
-      <button id="switch-microphone"  >Accept Mic</button>   
+      <button id="switch-microphone"  >Accept Mic</button>
+      <input type="range" id="myRange" value=8>
+
+ 
+<button onclick="changeFps()">Change Fps</button>
+ 
+<p style="color: white" id="demo"></p>   
 </div>
 
 
@@ -822,6 +828,15 @@ handEvent=event;
         var remotepacket=JSON.parse(handEvent.data);
 
 
+
+if(Packet.id=="hand"){
+
+//console.log("coming hand");
+drawScalledRemote(Packet);
+
+}
+
+
     if(remotepacket.id=="drawing") {
         var posdraw= [ ];
 posdraw[0]=remotepacket.position.x;
@@ -832,13 +847,12 @@ posdraw[1]=remotepacket.position.y;
       }
     else{
 
-           drawScalled(Packet);
+        //   drawScalled(Packet);
 
       }
 }
 }
  };
-
  
 </script>
 
@@ -986,17 +1000,17 @@ var handData = {
 var dicomUrl="";
 function drawImageDicom(){
     if (dicomUrl) {
-    var ctximg = $("#dicom")[0].getContext("2d"),
+    var ctximg1 = $("#dicom")[0].getContext("2d"),
         img = new Image();
     
-         ctximg.clearRect(0,0,1400,1000);
+         ctximg1.clearRect(0,0,1400,1000);
 
     img.onload = function(){
       var height = img.height;
   var width = img.width;
    dicomeZoomInImage=img;
 
-        ctximg.drawImage(img, 0, 0, width, height);
+        ctximg1.drawImage(img, 0, 0, width, height);
      };
     img.src = dicomUrl;
  }
@@ -1040,10 +1054,11 @@ var circles = [ ];
 //   radius: float > 0
 //   color: string "#RGB"
 //   fill: boolean
+var prevDot=null;
 function drawCircle(center, radius, color, fill) {
-
-    //send drawing to peer\\
+   
  if(drawFlag){
+
     var drawingData = {
   "id":"",
   "position": {
@@ -1067,54 +1082,28 @@ radius=5;
   ctxDrawing.arc(center[0], center[1], radius, 0, 2*Math.PI);
   ctxDrawing.closePath();
   ctxDrawing.lineWidth = 10;
-  // Choose whether to fill or outline the circle
-  //if (fill) {
-    ctxDrawing.fillStyle = color;
-    ctxDrawing.fill();
- // } else {
-  //  ctxDrawing.strokeStyle = color;
-  //  ctxDrawing.stroke();
- // }
-}}
 
 
-function drawCircle(center, radius, color, fill) {
-
-    //send drawing to peer\\
- if(drawFlag){
-    var drawingData = {
-  "id":"",
-  "position": {
-    "x":0 ,
-    "y": 0 
-  }
-}
-            //
-            drawingData.id="drawing";
-            drawingData.position.x=center[0];
-            drawingData.position.y=center[1];
-       
-                connection.send(JSON.stringify(drawingData));
-
-                //
-
-radius=5;
-  // Make an closed arc with a complete rotation
- 
+  ///
+  if(prevDot){
   ctxDrawing.beginPath();
-  ctxDrawing.arc(center[0], center[1], radius, 0, 2*Math.PI);
-  ctxDrawing.closePath();
-  ctxDrawing.lineWidth = 10;
+   ctxDrawing.moveTo(prevDot[0], prevDot[1]);
+   ctxDrawing.lineTo(center[0], center[1]);
+   ctxDrawing.strokeStyle=green;
+
+     ctxDrawing.stroke();
+
+}
   // Choose whether to fill or outline the circle
   //if (fill) {
     ctxDrawing.fillStyle = color;
     ctxDrawing.fill();
- // } else {
-  //  ctxDrawing.strokeStyle = color;
-  //  ctxDrawing.stroke();
- // }
-}}
 
+      prevDot = center.slice();
+
+}
+}
+var prevDotRemote=null;
 
 function drawRemoteCircle(center) {
        
@@ -1130,11 +1119,23 @@ color= purple;
   // Choose whether to fill or outline the circle
   //if (fill) {
     ctxRemoteDrawing.fillStyle = color;
-  ctxRemoteDrawing.fill();
- // } else {
-  //  ctxDrawing.strokeStyle = color;
-  //  ctxDrawing.stroke();
- // }
+    ctxRemoteDrawing.fill();
+   
+     if(prevDotRemote){
+  ctxRemoteDrawing.beginPath();
+   ctxRemoteDrawing.moveTo(prevDot[0], prevDot[1]);
+   ctxRemoteDrawing.lineTo(center[0], center[1]);
+     ctxRemoteDrawing.stroke();
+
+}
+  // Choose whether to fill or outline the circle
+  //if (fill) {
+    ctxRemoteDrawing.fillStyle = color;
+    ctxRemoteDrawing.fill();
+
+      prevDotRemote = center.slice();
+
+
 }
 
 
@@ -1425,9 +1426,9 @@ function dicomFullScreen(){
  // var percentColabwidth=(colabEleWidth /100)*70;
  
 
-      var ctximg = $("#dicom")[0].getContext("2d"),
+      var ctximg2 = $("#dicom")[0].getContext("2d"),
         img = new Image();
-     ctximg.clearRect(0,0,1400,1000);
+     ctximg2.clearRect(0,0,1400,1000);
 
     img.onload = function(){
         var w=parseFloat(img.width);
@@ -1464,7 +1465,7 @@ function dicomFullScreen(){
 
  }
 
-                ctximg.drawImage(img, 0, 0, w, h);
+                ctximg2.drawImage(img, 0, 0, w, h);
                       return;
 
 
@@ -1502,7 +1503,7 @@ function dicomFullScreen(){
 
  }
 
-                ctximg.drawImage(img, 0, 0, w, h);
+                ctximg2.drawImage(img, 0, 0, w, h);
                       return;
 
 
@@ -1548,9 +1549,9 @@ function dicomFullScreenRemote(){
  // var percentColabwidth=(colabEleWidth /100)*70;
  
 
-      var ctximg = $("#dicom")[0].getContext("2d"),
+      var ctximg3 = $("#dicom")[0].getContext("2d"),
         img = new Image();
-     ctximg.clearRect(0,0,1400,1000);
+     ctximg3.clearRect(0,0,1400,1000);
 
     img.onload = function(){
         var w=parseFloat(img.width);
@@ -1587,7 +1588,7 @@ function dicomFullScreenRemote(){
 
  }
 
-                ctximg.drawImage(img, 0, 0, w, h);
+                ctximg3.drawImage(img, 0, 0, w, h);
                       return;
 
 
@@ -1625,7 +1626,7 @@ function dicomFullScreenRemote(){
 
  }
 
-                ctximg.drawImage(img, 0, 0, w, h);
+                ctximg3.drawImage(img, 0, 0, w, h);
                       return;
 
 
@@ -1660,9 +1661,9 @@ function dicomSmallScreen(){
  // var percentColabwidth=(colabEleWidth /100)*70;
  
 
-      var ctximg = $("#dicom")[0].getContext("2d"),
+      var ctximg4 = $("#dicom")[0].getContext("2d"),
         img = new Image();
-     ctximg.clearRect(0,0,1400,1000);
+     ctximg4.clearRect(0,0,1400,1000);
 
     img.onload = function(){
         var w=parseFloat(img.width);
@@ -1699,7 +1700,7 @@ function dicomSmallScreen(){
 
  }
 
-                ctximg.drawImage(img, 0, 0, w, h);
+                ctximg4.drawImage(img, 0, 0, w, h);
                       return;
 
 
@@ -1737,7 +1738,7 @@ function dicomSmallScreen(){
 
  }
 
-                ctximg.drawImage(img, 0, 0, w, h);
+                ctximg4.drawImage(img, 0, 0, w, h);
                       return;
 
 
@@ -1777,9 +1778,9 @@ function dicomSmallScreenRemote(){
  // var percentColabwidth=(colabEleWidth /100)*70;
  
 
-      var ctximg = $("#dicom")[0].getContext("2d"),
+      var ctximg5 = $("#dicom")[0].getContext("2d"),
         img = new Image();
-     ctximg.clearRect(0,0,1400,1000);
+     ctximg5.clearRect(0,0,1400,1000);
 
     img.onload = function(){
         var w=parseFloat(img.width);
@@ -1816,7 +1817,7 @@ function dicomSmallScreenRemote(){
 
  }
 
-                ctximg.drawImage(img, 0, 0, w, h);
+                ctximg5.drawImage(img, 0, 0, w, h);
                       return;
 
 
@@ -1854,7 +1855,7 @@ function dicomSmallScreenRemote(){
 
  }
 
-                ctximg.drawImage(img, 0, 0, w, h);
+                ctximg5.drawImage(img, 0, 0, w, h);
                       return;
 
 
@@ -1920,13 +1921,13 @@ dicomeZoomInImage.width=zoomInWidth;
   
 
 
-      var ctximg = $("#dicom")[0].getContext("2d"),
+      var ctximg6 = $("#dicom")[0].getContext("2d"),
         img = new Image();
-     ctximg.clearRect(0,0,1400,1000);
+     ctximg6.clearRect(0,0,1400,1000);
 
     img.onload = function(){
  
-        ctximg.drawImage(img, 0, 0, zoomInWidth, zoomInHeight);
+        ctximg6.drawImage(img, 0, 0, zoomInWidth, zoomInHeight);
      };
     img.src = dicomUrl;
     
@@ -1968,13 +1969,13 @@ dicomeZoomInImage.width=zoomInWidth;
   
 
 
-      var ctximg = $("#dicom")[0].getContext("2d"),
+      var ctximg7 = $("#dicom")[0].getContext("2d"),
         img = new Image();
-     ctximg.clearRect(0,0,1400,1000);
+     ctximg7.clearRect(0,0,1400,1000);
 
     img.onload = function(){
  
-        ctximg.drawImage(img, 0, 0, zoomInWidth, zoomInHeight);
+        ctximg7.drawImage(img, 0, 0, zoomInWidth, zoomInHeight);
      };
     img.src = dicomUrl;
     
@@ -1984,7 +1985,7 @@ dicomeZoomInImage.width=zoomInWidth;
 
 
  <script type="text/javascript">var NREUMQ=NREUMQ||[];NREUMQ.push(["mark","firstbyte",new Date().getTime()]);</script>
- <script>
+  <script>
 var ws;
 var paused = false;
 var pauseOnGesture = false;
@@ -2041,8 +2042,8 @@ function init() {
 
       if (typeof(obj.hands) != 'undefined' && obj.hands.length > 0) {
         
-
-          drawScalled(obj);
+objHandSend=obj;
+          //drawScalled(obj);
         }
 
 
@@ -2056,12 +2057,7 @@ function init() {
 
 
 
-   if (flagopen) {
-         connection.send(str);
-         ///
-          //pointables
-      }
-       
+ 
        // console.log(obj.pointables);
 
       }
@@ -2105,7 +2101,11 @@ function pauseForGestures() {
     pauseOnGesture = false;
   }
 }
+
+var objHandSend;
+
 </script>
+
 
 <script type="text/javascript">if (!NREUMQ.f) { NREUMQ.f=function() {
 NREUMQ.push(["load",new Date().getTime()]);
@@ -2151,7 +2151,14 @@ NREUMQ.push(["nrfj","bam.nr-data.net","35bb71d9c5","1717595","JQ1aFhAMClhVEx4MVx
     ctxHandCanvas.fillStyle = "#f0c295";
 
 
- function drawScalled(obj) {
+  function scale(value, oldMin, oldMax, newMin, newMax) {
+    return (((newMax - newMin) * (value - oldMin)) / (oldMax - oldMin)) + newMin;
+  }
+
+
+
+var objHandSend;
+ function drawScalled2(obj) {
 
   
 
@@ -2159,10 +2166,49 @@ var red = '#F00', green = '#0F0', blue = '#00F', purple = '#A0F';
 // Create an array to save circle properties
 var fill=true;
 var color=red;
-    
+ var   handObj = {
+    "id":"hand",
+  
+    "pointables1": {
+      "index1":{},
+      "index2":{},
+      "index3":{},
+      "index4":{},
+      "index5":{}
+       
+    },
+     "pointables2": {
+       "index1":{},
+      "index2":{},
+      "index3":{},
+      "index4":{},
+      "index5":{}
+       
+    },
+     "pointables3": {
+       "index1":{},
+      "index2":{},
+      "index3":{},
+      "index4":{},
+      "index5":{}
+       
+    },
+
+    "hands": {
+       
+    }
+ }
  
         var pointablesMap = obj.pointables;
+//handObj.pointables=JSON.stringify(pointablesMap);
+handObj.hands=JSON.stringify(obj.hands);
+//console.log("objj"+JSON.stringify(handObj));
 
+  if (flagopen) {
+         connection.send(JSON.stringify(handObj));
+         ///
+          //pointables
+      }
 
      ctxHandCanvas.clearRect(0, 0,  widthHandCanvas,  heightHandCanvas);
 
@@ -2207,18 +2253,94 @@ var poscircle=[];
 poscircle[0]=posX;
 poscircle[1]=posY;
 
-         drawCircle(poscircle, 10, color, fill);
+        drawCircle(poscircle, 10, color, fill);
     }
 
+
+if(!drawFlag){
     
+    prevDot=null;
+
+}
+
+     //
 //}
+          // console.log("hand objjjj"+ handObj.hands);
+var count=0;
+
+     
+///hardCoding
+
+     var pointable = pointablesMap[0];
+      var pos = pointable.tipPosition;
+      var pos1 = pointable.pipPosition;
+      var pos2 = pointable.carpPosition;
+
+      handObj.pointables1.index1=pos;
+      handObj.pointables2.index1=pos1;
+      handObj.pointables3.index1=pos2;
+
+       var pointable = pointablesMap[1];
+      var pos = pointable.tipPosition;
+      var pos1 = pointable.pipPosition;
+      var pos2 = pointable.carpPosition;
+
+      handObj.pointables1.index2=pos;
+      handObj.pointables2.index2=pos1;
+      handObj.pointables3.index2=pos2;
+
+       var pointable = pointablesMap[2];
+      var pos = pointable.tipPosition;
+      var pos1 = pointable.pipPosition;
+      var pos2 = pointable.carpPosition;
+
+      handObj.pointables1.index3=pos;
+      handObj.pointables2.index3=pos1;
+      handObj.pointables3.index3=pos2;
+
+       var pointable = pointablesMap[3];
+      var pos = pointable.tipPosition;
+      var pos1 = pointable.pipPosition;
+      var pos2 = pointable.carpPosition;
+
+      handObj.pointables1.index4=pos;
+      handObj.pointables2.index4=pos1;
+      handObj.pointables3.index4=pos2;
+
+       var pointable = pointablesMap[4];
+      var pos = pointable.tipPosition;
+      var pos1 = pointable.pipPosition;
+      var pos2 = pointable.carpPosition;
+
+      handObj.pointables1.index5=pos;
+      handObj.pointables2.index5=pos1;
+      handObj.pointables3.index5=pos2;
+
+
+
+///hard
+ if (flagopen) {
+         connection.send(JSON.stringify(handObj));
+         ///
+          //pointables
+      }
+
+
 
     for (var i in pointablesMap) {
+      count=count+1;
+     // console.log("count"+count);
       // get the pointable's position
       var pointable = pointablesMap[i];
       var pos = pointable.tipPosition;
       var pos1 = pointable.pipPosition;
       var pos2 = pointable.carpPosition;
+
+      handObj.pointables1=pos;
+      handObj.pointables2=pos1;
+      handObj.pointables3=pos2;
+
+ 
 
        var x = pos[0];
        var y = pos[1];
@@ -2226,7 +2348,7 @@ poscircle[1]=posY;
 
             if (z < 10) { z = 10; }
             if (z > 15) { z = 15; }
-           // console.log("zzzzzzzzzz"+ z);
+        //   console.log("pointables map"+ pointablesMap);
           //  targets.push({ 'x': x, 'y': y, 'z': z });
           
    ctxHandCanvas.beginPath();
@@ -2294,8 +2416,511 @@ poscircle[1]=posY;
  
   }
 
-  function scale(value, oldMin, oldMax, newMin, newMax) {
-    return (((newMax - newMin) * (value - oldMin)) / (oldMax - oldMin)) + newMin;
+
+
+
+
+
+
+window.requestAnimationFrame = function() {
+  return window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    function(f) {
+      window.setTimeout(f,1e3/60);
+    }
+}();
+
+//var $ = document.querySelector.bind(document);
+
+ //30 was better
+//50 wasnt good enough
+var fps = 8;
+function changeFps() {
+    fps=document.getElementById("myRange").value ;
+        var x = document.getElementById("myRange").value;
+    document.getElementById("demo").innerHTML = x;
+}
+var now;
+var then = Date.now();
+var interval;
+var delta;
+
+// For this demo
+var counter = 0;
+var first = then;
+
+/*var second_since = Date.now();
+var second = 0;
+var second_fps = 0;*/
+ 
+function draw() {
+  
+   interval= 1000/fps;
+  // Calculating REAL FPS
+  /*if (second > 1000) {
+    second_since = Date.now();
+    second = 0;
+    
+    console.log(second_fps);
+    
+    second_fps = 0;
+  }
+  else {
+    second = Date.now() - second_since;
+    ++second_fps;
+  }*/
+  
+  requestAnimationFrame(draw);
+  
+  now = Date.now();
+  delta = now - then;
+  //console.log(delta);
+  //console.log("value changes "+ interval);
+  if (delta > interval) {
+    // update time stuffs
+    
+    // Just `then = now` is not enough.
+    // Lets say we set fps at 10 which means
+    // each frame must take 100ms
+    // Now frame executes in 16ms (60fps) so
+    // the loop iterates 7 times (16*7 = 112ms) until
+    // delta > interval === true
+    // Eventually this lowers down the FPS as
+    // 112*10 = 1120ms (NOT 1000ms).
+    // So we have to get rid of that extra 12ms
+    // by subtracting delta (112) % interval (100).
+    // Hope that makes sense.
+    
+    then = now - (delta % interval);
+    
+    // ... Code for Drawing the Frame ...
+    var time_el = (then - first)/1000;
+    
+
+
+
+///hard
+ //if (flagopen) {
+  if(objHandSend){
+       //  connection.send(JSON.stringify(handObj));
+     //    console.log("sent now!"+JSON.stringify(objHandSend));
+      
+      drawScalled2(objHandSend);
+         ///
+          //pointables
+      }
+//}
+//console.log("now!");
+  }
+}
+ 
+draw();
+
+
+
+
+
+  function drawScalledRemote(obj) {
+
+  //console.log(obj);
+    ctxHandCanvas.fillStyle = "pink";
+
+     ctxHandCanvas.clearRect(0, 0,  widthHandCanvas,  heightHandCanvas);
+
+
+      var pos =  obj.pointables1.index1;
+      var pos1 = obj.pointables2.index1;
+      var pos2 = obj.pointables3.index1;
+
+     
+
+
+
+       var x = pos[0];
+       var y = pos[1];
+       var z = pos[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 15) { z = 15; }
+        //   console.log("pointables map"+ pointablesMap);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+    var posX= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+        var x = pos1[0];
+       var y = pos1[1];
+       var z = pos1[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+ var posX1= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY1= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+  ctxHandCanvas.beginPath();
+     ctxHandCanvas.moveTo(posX, posY);
+    ctxHandCanvas.lineTo(posX1, posY1);
+      ctxHandCanvas.stroke();
+ 
+       var x = pos2[0];
+       var y = pos2[1];
+       var z = pos2[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill(); 
+      var posX2= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY2= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+ ctxHandCanvas.beginPath();
+      ctxHandCanvas.moveTo(posX1, posY1);
+      ctxHandCanvas.lineTo(posX2, posY2);
+      ctxHandCanvas.stroke();
+
+
+ var pos =  obj.pointables1.index2;
+      var pos1 = obj.pointables2.index2;
+      var pos2 = obj.pointables3.index2;
+
+     
+
+
+
+       var x = pos[0];
+       var y = pos[1];
+       var z = pos[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 15) { z = 15; }
+        //   console.log("pointables map"+ pointablesMap);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+    var posX= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+        var x = pos1[0];
+       var y = pos1[1];
+       var z = pos1[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+ var posX1= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY1= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+  ctxHandCanvas.beginPath();
+     ctxHandCanvas.moveTo(posX, posY);
+    ctxHandCanvas.lineTo(posX1, posY1);
+      ctxHandCanvas.stroke();
+ 
+       var x = pos2[0];
+       var y = pos2[1];
+       var z = pos2[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill(); 
+      var posX2= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY2= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+ ctxHandCanvas.beginPath();
+      ctxHandCanvas.moveTo(posX1, posY1);
+      ctxHandCanvas.lineTo(posX2, posY2);
+      ctxHandCanvas.stroke();
+
+
+
+ var pos =  obj.pointables1.index3;
+      var pos1 = obj.pointables2.index3;
+      var pos2 = obj.pointables3.index3;
+
+     
+
+
+
+       var x = pos[0];
+       var y = pos[1];
+       var z = pos[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 15) { z = 15; }
+        //   console.log("pointables map"+ pointablesMap);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+    var posX= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+        var x = pos1[0];
+       var y = pos1[1];
+       var z = pos1[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+ var posX1= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY1= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+  ctxHandCanvas.beginPath();
+     ctxHandCanvas.moveTo(posX, posY);
+    ctxHandCanvas.lineTo(posX1, posY1);
+      ctxHandCanvas.stroke();
+ 
+       var x = pos2[0];
+       var y = pos2[1];
+       var z = pos2[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill(); 
+      var posX2= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY2= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+ ctxHandCanvas.beginPath();
+      ctxHandCanvas.moveTo(posX1, posY1);
+      ctxHandCanvas.lineTo(posX2, posY2);
+      ctxHandCanvas.stroke();
+
+
+
+ var pos =  obj.pointables1.index4;
+      var pos1 = obj.pointables2.index4;
+      var pos2 = obj.pointables3.index4;
+
+     
+
+
+
+       var x = pos[0];
+       var y = pos[1];
+       var z = pos[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 15) { z = 15; }
+        //   console.log("pointables map"+ pointablesMap);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+    var posX= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+        var x = pos1[0];
+       var y = pos1[1];
+       var z = pos1[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+ var posX1= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY1= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+  ctxHandCanvas.beginPath();
+     ctxHandCanvas.moveTo(posX, posY);
+    ctxHandCanvas.lineTo(posX1, posY1);
+      ctxHandCanvas.stroke();
+ 
+       var x = pos2[0];
+       var y = pos2[1];
+       var z = pos2[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill(); 
+      var posX2= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY2= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+ ctxHandCanvas.beginPath();
+      ctxHandCanvas.moveTo(posX1, posY1);
+      ctxHandCanvas.lineTo(posX2, posY2);
+      ctxHandCanvas.stroke();
+
+
+
+ var pos =  obj.pointables1.index5;
+      var pos1 = obj.pointables2.index5;
+      var pos2 = obj.pointables3.index5;
+
+     
+
+
+
+       var x = pos[0];
+       var y = pos[1];
+       var z = pos[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 15) { z = 15; }
+        //   console.log("pointables map"+ pointablesMap);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+    var posX= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+        var x = pos1[0];
+       var y = pos1[1];
+       var z = pos1[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill();
+ var posX1= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY1= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+
+
+  ctxHandCanvas.beginPath();
+     ctxHandCanvas.moveTo(posX, posY);
+    ctxHandCanvas.lineTo(posX1, posY1);
+      ctxHandCanvas.stroke();
+ 
+       var x = pos2[0];
+       var y = pos2[1];
+       var z = pos2[2];
+
+            if (z < 10) { z = 10; }
+            if (z > 10) { z = 10; }
+           // console.log("zzzzzzzzzz"+ z);
+          //  targets.push({ 'x': x, 'y': y, 'z': z });
+          
+   ctxHandCanvas.beginPath();
+
+           ctxHandCanvas.arc( scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas),
+                      scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100),
+                     z, 0, Math.PI*2, true);
+       ctxHandCanvas.closePath();
+       ctxHandCanvas.fill(); 
+      var posX2= scale(x,  leapMinX,  leapMaxX, -100,  widthHandCanvas);
+    var posY2= scale(y,  leapMinY,  leapMaxY,  heightHandCanvas, -100);
+ ctxHandCanvas.beginPath();
+      ctxHandCanvas.moveTo(posX1, posY1);
+      ctxHandCanvas.lineTo(posX2, posY2);
+      ctxHandCanvas.stroke();
+
+
+
+ 
   }
 
 
